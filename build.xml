@@ -1,0 +1,74 @@
+<project name="ICND" basedir="." default="main">
+
+	<property name="src.dir"     value="src"/>
+	<property name="lib.dir"     value="lib"/>
+	<property name="build.dir"   value="build"/>
+	<property name="config.dir"	 value="config"/>
+	<property name="classes.dir" value="${build.dir}/classes"/>
+	<property name="jar.dir"     value="jar"/>
+	<property name="main-class-edge"  value="com.spencersevilla.icnd.edge.ICNDEdge"/>
+	<property name="main-class-core"  value="com.spencersevilla.icnd.core.ICNDCore"/>
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+	</path>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="${jar.dir}"/>
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classes.dir}"/>
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" debug="on" debuglevel="lines,vars,source" classpathref="classpath" />
+	</target>
+
+	<target name="jar-edge" depends="compile">
+		<mkdir dir="${jar.dir}"/>
+		<jar destfile="${jar.dir}/icnd-edge.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-edge}"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run-edge" depends="jar-edge">
+		<java fork="true" classname="${main-class-edge}">
+			<classpath>
+				<path refid="classpath" />
+				<path path="${config.dir}" />
+				<path location="${jar.dir}/icnd-edge.jar" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="jar-core" depends="compile">
+		<mkdir dir="${jar.dir}"/>
+		<jar destfile="${jar.dir}/icnd-core.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-core}"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run-core" depends="jar-core">
+		<java fork="true" classname="${main-class-core}">
+			<classpath>
+				<path refid="classpath" />
+				<path path="${config.dir}" />
+				<path location="${jar.dir}/icnd-core.jar" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="clean-build" depends="clean,jar-edge,jar-core"/>
+
+	<target name="edge" depends="run-edge"/>
+	<target name="core" depends="run-core"/>
+
+	<target name="info" >
+		<property name="myclasspath" refid="classpath"/>
+		<echo message="classpath = ${myclasspath}"/>
+	</target>
+
+</project>
