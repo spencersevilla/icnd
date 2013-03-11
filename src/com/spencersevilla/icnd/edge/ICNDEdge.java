@@ -7,6 +7,7 @@ import java.io.File;
 public class ICNDEdge {
 	protected Node icnNode; /* the entry-point to the ICN system */
 	protected ArrayList<DataObject> dataList;
+	protected com.spencersevilla.fern.FERNInterface fern;
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("edge-main.");
@@ -27,9 +28,11 @@ public class ICNDEdge {
 	// }
 
 	public void start() throws Exception {
-		System.out.println("started.");
 		icnNode = null;
 		dataList = new ArrayList<DataObject>();
+		fern = new com.spencersevilla.fern.FERNInterface();
+
+		System.out.println("icnd_edge started");
 	}
 
 	public void stop() throws Exception {
@@ -91,7 +94,38 @@ public class ICNDEdge {
 	protected EndNode[] locateObject(String name) {
 		// ALL this should do is issue a FERN CONTENT record request for the object!
 		// This record request should return a set of FERN nodenames that own the object
+		com.spencersevilla.fern.Request req = new com.spencersevilla.fern.Request(name);
+		req.setType(com.spencersevilla.fern.Type.ICN);
+		com.spencersevilla.fern.Response resp = fern.resolveRequest(req);
+
+		com.spencersevilla.fern.Request gotreq = (com.spencersevilla.fern.Request) resp.getRequest();
+		if (!req.getName().equals(gotreq.getName())) {
+			System.err.println("icnd_edge error: locateObject: req != gotreq");
+			return null;
+		}
+
+		ArrayList<ICNRecord> recordset = parseResponse(resp);
+
+		// still not done...
 		return null;
+	}
+
+	private ArrayList<ICNRecord> parseResponse(com.spencersevilla.fern.Response response) {
+		com.spencersevilla.fern.FERNObject obj = response.getObject();
+		ArrayList<com.spencersevilla.fern.Record> rset = obj.getRecordSet();
+
+		ArrayList<ICNRecord> icn_rset = new ArrayList<ICNRecord>();
+
+		for (com.spencersevilla.fern.Record r : rset) {
+			if (r.getType() == com.spencersevilla.fern.Type.ICN) {
+				ICNRecord icn_rec = new ICNRecord(r.getData());
+				icn_rset.add(icn_rec);
+			} else {
+				System.err.println("icnd_edge error: parseResponse: received non-ICN record???");
+			}
+		}
+
+		return icn_rset;
 	}
 
 	// add complexity to this function later...
